@@ -162,7 +162,11 @@ class App extends Base
             $eventName = 'on'.ucfirst($eventName);
         }
 
-        $component->$eventName = $handler;
+        if ($component) {
+            $component->$eventName = $handler;
+        } else {
+            $this->_pendingEvents[$componentId][$eventName][] = $handler;
+        }
     }
 
     /**
