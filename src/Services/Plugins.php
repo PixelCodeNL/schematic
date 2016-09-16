@@ -138,31 +138,37 @@ class Plugins extends Base
             }
         }
 
+        $ignoredPlugins = Craft::app()->schematic->getConfig('ignoredPlugins', []);
+
         Craft::log(Craft::t('Importing Plugins'));
         foreach ($pluginDefinitions as $handle => $pluginDefinition) {
             Craft::log(Craft::t('Applying definitions for {handle}', ['handle' => $handle]));
 
-            if ($plugin = $this->getPlugin($handle)) {
-                if ($pluginDefinition['isInstalled']) {
-                    $isNewPlugin = !$plugin->isInstalled;
-                    if ($isNewPlugin) {
-                        $this->installPluginByHandle($handle);
+            if (!in_array($handle, $ignoredPlugins)) {
+                if ($plugin = $this->getPlugin($handle)) {
+                    if ($pluginDefinition['isInstalled']) {
+                        $isNewPlugin = !$plugin->isInstalled;
+                        if ($isNewPlugin) {
+                            $this->installPluginByHandle($handle);
+                        }
+
+                        $this->togglePluginByHandle($handle, $pluginDefinition['isEnabled']);
+
+                        if (!$isNewPlugin && $plugin->isEnabled) {
+                            $this->runMigrations($handle);
+                        }
+
+                        if (array_key_exists('settings', $pluginDefinition)) {
+                            Craft::log(Craft::t('Saving plugin settings for {handle}', ['handle' => $handle]));
+
+                            $this->getPluginService()->savePluginSettings($plugin, $pluginDefinition['settings']);
+                        }
+                    } else {
+                        $this->uninstallPluginByHandle($handle);
                     }
-
-                    $this->togglePluginByHandle($handle, $pluginDefinition['isEnabled']);
-
-                    if (!$isNewPlugin && $plugin->isEnabled) {
-                        $this->runMigrations($handle);
-                    }
-
-                    if (array_key_exists('settings', $pluginDefinition)) {
-                        Craft::log(Craft::t('Saving plugin settings for {handle}', ['handle' => $handle]));
-
-                        $this->getPluginService()->savePluginSettings($plugin, $pluginDefinition['settings']);
-                    }
-                } else {
-                    $this->uninstallPluginByHandle($handle);
                 }
+            } else {
+                Craft::log(Craft::t('Plugin {handle} is ignored in configuration', ['handle' => $handle]));
             }
         }
 
@@ -181,9 +187,13 @@ class Plugins extends Base
         $plugins = $this->getPluginService()->getPlugins(false);
         $pluginDefinitions = [];
 
+        $ignoredPlugins = Craft::app()->schematic->getConfig('ignoredPlugins', []);
+
         foreach ($plugins as $plugin) {
             $handle = preg_replace('/^Craft\\\\(.*?)Plugin$/', '$1', get_class($plugin));
-            $pluginDefinitions[$handle] = $this->getPluginDefinition($plugin);
+            if (!in_array($handle, $ignoredPlugins)) {
+                $pluginDefinitions[$handle] = $this->getPluginDefinition($plugin);
+            }
         }
         ksort($pluginDefinitions);
 
