@@ -24,17 +24,22 @@ class ImportCommand extends Base
      *
      * @param string $file          yml file containing the schema definition
      * @param string $override_file yml file containing the override values
+     * @param string $config_file   yml file containing Schematic configuration
      * @param bool   $force         if set to true items not in the import will be deleted
      *
      * @return int
      */
-    public function actionIndex($file = 'craft/config/schema.yml', $override_file = 'craft/config/override.yml', $force = false)
-    {
+    public function actionIndex(
+        $file = 'craft/config/schema.yml',
+        $override_file = 'craft/config/override.yml',
+        $config_file = 'craft/config/schematic_config.yml',
+        $force = false
+    ) {
         if (!IOHelper::fileExists($file)) {
             $this->usageError(Craft::t('File not found.'));
         }
 
-        $result = Craft::app()->schematic->importFromYaml($file, $override_file, $force);
+        $result = Craft::app()->schematic->importFromYaml($file, $override_file, $force, $config_file);
 
         if (!$result->hasErrors()) {
             Craft::log(Craft::t('Loaded schema from {file}', ['file' => $file]));

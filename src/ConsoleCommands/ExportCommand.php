@@ -22,12 +22,13 @@ class ExportCommand extends Base
      * Exports the Craft datamodel.
      *
      * @param string $file file to write the schema to
+     * @param string $config_file
      *
      * @return int
      */
-    public function actionIndex($file = 'craft/config/schema.yml')
+    public function actionIndex($file = 'craft/config/schema.yml', $config_file = 'craft/config/schematic_config.yml')
     {
-        Craft::app()->schematic->exportToYaml($file);
+        Craft::app()->schematic->exportToYaml($file, true, $config_file);
 
         Craft::log(Craft::t('Exported schema to {file}', ['file' => $file]));
 

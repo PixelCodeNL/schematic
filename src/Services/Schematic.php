@@ -7,6 +7,7 @@ use Craft\BaseApplicationComponent as BaseApplication;
 use Craft\IOHelper;
 use NerdsAndCompany\Schematic\Models\Data;
 use NerdsAndCompany\Schematic\Models\Result;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Schematic Service.
@@ -23,6 +24,11 @@ class Schematic extends BaseApplication
 {
     const SCHEMATIC_METHOD_IMPORT = 'import';
     const SCHEMATIC_METHOD_EXPORT = 'export';
+
+    /**
+     * @var array
+     */
+    private $config = [];
 
     /**
      * Returns data from import model or default.
@@ -42,19 +48,22 @@ class Schematic extends BaseApplication
      * Import from Yaml file.
      *
      * @param string $file
-     * @param string $override
-     * @param bool   $force    if set to true items not included in import will be deleted
+     * @param null|string $override
+     * @param bool $force if set to true items not included in import will be deleted
+     * @param null|string $config
      *
      * @return Result
      */
-    public function importFromYaml($file, $override = null, $force = false)
+    public function importFromYaml($file, $override = null, $force = false, $config = null)
     {
         Craft::app()->config->maxPowerCaptain();
         Craft::app()->setComponent('userSession', $this);
 
         $yaml = IOHelper::getFileContents($file);
         $yaml_override = IOHelper::getFileContents($override);
+        $yaml_config = IOHelper::getFileContents($config);
         $dataModel = Data::fromYaml($yaml, $yaml_override);
+        $this->config = $yaml_config ? Yaml::parse($yaml_config) : [];
 
         return $this->importDataModel($dataModel, $force);
     }
@@ -63,14 +72,18 @@ class Schematic extends BaseApplication
      * Export to Yaml file.
      *
      * @param string $file
-     * @param bool   $autoCreate
+     * @param bool $autoCreate
+     * @param null|string $config
      *
      * @return Result
      */
-    public function exportToYaml($file, $autoCreate = true)
+    public function exportToYaml($file, $autoCreate = true, $config = null)
     {
         Craft::app()->config->maxPowerCaptain();
         Craft::app()->setComponent('userSession', $this);
+
+        $yaml_config = IOHelper::getFileContents($config);
+        $this->config = $yaml_config ? Yaml::parse($yaml_config) : [];
 
         $result = new Result();
         $dataModel = $this->exportDataModel();
@@ -233,5 +246,19 @@ class Schematic extends BaseApplication
     public function checkPermission()
     {
         return true;
+    }
+
+    /**
+     * @param string $key
+     * @param null|mixed $defaultValue
+     * @return mixed|null
+     */
+    public function getConfig($key, $defaultValue = null)
+    {
+        if (array_key_exists($key, $this->config)) {
+            return $this->config[$key];
+        }
+
+        return $defaultValue;
     }
 }
