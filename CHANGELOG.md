@@ -1,3 +1,6 @@
+### 3.8.9 ###
+- Added singles to elementIndexSettings sources
+
 ### 3.8.8 ###
 - Added ability to exclude datatypes on import (thanks @Zae)
 
