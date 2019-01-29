@@ -69,6 +69,7 @@ class Sources extends BaseApplication
 
        list($sourceType, $sourceFrom) = explode(':', $source);
        switch ($sourceType) {
+          case 'single':
           case 'section':
           case 'createEntries':
           case 'deleteEntries':

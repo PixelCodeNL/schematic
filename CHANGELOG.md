@@ -1,3 +1,6 @@
+### 3.8.12.1 ###
+- Pixel&Code: Added singles to elementIndexSettings sources
+
 ### 3.8.12 ###
 - Do last fields import after hook imports
 
